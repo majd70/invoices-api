@@ -1,0 +1,49 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: invoices_api
+    ports:
+      - "8000:8000"
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: invoices
+      DB_USERNAME: invoices
+      DB_PASSWORD: secret
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - invoices
+
+  db:
+    image: mysql:8.0
+    container_name: invoices_db
+    environment:
+      MYSQL_DATABASE: invoices
+      MYSQL_USER: invoices
+      MYSQL_PASSWORD: secret
+      MYSQL_ROOT_PASSWORD: secret
+    ports:
+      - "3306:3306"
+    volumes:
+      - dbdata:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-psecret"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+      - invoices
+
+volumes:
+  dbdata:
+
+networks:
+  invoices:
+    driver: bridge
